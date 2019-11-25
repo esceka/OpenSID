@@ -52,6 +52,9 @@
       var BASE_URL = "<?= base_url(); ?>";
     </script>
 
+    <!-- Diperlukan untuk script jquery khusus halaman -->
+		<script src="<?= base_url() ?>assets/bootstrap/js/jquery.min.js"></script>
+    
     <style type="text/css">
       #footer{
         padding: 3px 0;

@@ -32,6 +32,9 @@
                   case 4:
                     $views_partial_layout = 'web/mandiri/bantuan.php';
                     break;
+                  case 5:
+                    $views_partial_layout = 'web/mandiri/surat.php';
+                    break;
                   default:
                     $views_partial_layout = 'web/mandiri/layanan.php';
                 }
@@ -46,6 +49,7 @@
   </section>
 </div>
 <?php $this->load->view('web/mandiri/footer_mandiri.php') ?>
+<div class="artikel layanan">
 <div class="modal fade" id="lapor_modal" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -85,11 +89,12 @@
               <button type="button" class="btn btn-primary pull-right" id="kirim"><i class="fa fa-sign-in"></i>Kirim</button>
             </div>
           </div>
-
         </div>
       </div>
     </div>
   </div>
+</div>
+</div>
 
   <script>
     var alamat = "<?= site_url('lapor_web/insert') ?>";
