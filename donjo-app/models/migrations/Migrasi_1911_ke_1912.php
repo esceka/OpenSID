@@ -123,5 +123,95 @@ class Migrasi_1911_ke_1912 extends CI_model {
 		}
 		if (!$this->db->table_exists('dokumen_hidup'))
 			$this->db->query("CREATE VIEW dokumen_hidup AS SELECT * FROM dokumen WHERE deleted <> 1");
-	}
+
+    // Table ref_dokumen_mandiri tempat nama dokumen sbg syarat Permohonan surat
+    $this->dbforge->add_field(array(
+      'id' => array(
+        'type' => 'INT',
+        'unsigned' => TRUE,
+        'null' => FALSE,
+        'auto_increment' => TRUE
+      ),
+      'nama_surat' => array(
+        'type' => 'VARCHAR',
+        'constraint' => 100,
+        'null' => TRUE,
+
+      ),
+    ));
+    $this->dbforge->add_key("id",true);
+    $this->dbforge->create_table("ref_dokumen_mandiri", TRUE);
+
+    ## Menambahkan Data Table dokumen_mandiri
+    $query = "
+    INSERT INTO `ref_dokumen_mandiri` (`id`, `nama_surat`) VALUES
+    (1, 'Surat Pengantar RT/RW'),
+    (2, 'Fotokopi KK'),
+    (3, 'Fotokopi KTP'),
+    (4, 'Fotokopi Surat Nikah/Akta Nikah/Kutipan Akta Perkawinan'),
+    (5, 'Fotokopi Akta Kelahiran/Surat Kelahiran bagi keluarga yang mempunyai anak'),
+    (6, 'Surat Pindah Datang dari tempat asal'),
+    (7, 'Surat Keterangan Kematian dari Rumah Sakit, Rumah Bersalin Puskesmas, atau visum Dokter'),
+    (8, 'Surat Keterangan Cerai'),
+    (9, 'Fotokopi Ijasah Terakhir'),
+    (10, 'SK. PNS/KARIP/SK. TNI – POLRI'),
+    (11, 'Surat Keterangan Kematian dari Kepala Desa/Kelurahan'),
+    (12, 'Surat imigrasi / STMD (Surat Tanda Melapor Diri)');
+    ";
+
+    $this->db->query($query);
+
+    // Table dokumen_mandiri sbg link antara sura g dimohon dan dokumen yg diperlukan
+    $this->dbforge->add_field(array(
+      'id' => array(
+        'type' => 'INT',
+        'constraint' => 1,
+        'unsigned' => TRUE,
+        'null' => FALSE,
+        'auto_increment' => TRUE
+      ),
+      'tweb_surat_format_id' => array(
+        'type' => 'INT',
+        'constraint' => 1,
+        'unsigned' => TRUE,
+        'null' => FALSE,
+
+      ),
+      'ref_dokumen_mandiri_id' => array(
+        'type' => 'INT',
+        'constraint' => 1,
+        'unsigned' => TRUE,
+        'null' => FALSE,
+
+      ),
+    ));
+    $this->dbforge->add_key("id",true);
+    $this->dbforge->create_table("dokumen_mandiri", TRUE);
+
+    ## Menambahkan Data Table dokumen_mandiri (contoh aja)
+    $query = "
+    INSERT INTO `dokumen_mandiri` (`id`, `tweb_surat_format_id`, `ref_dokumen_mandiri_id`) VALUES
+    (1, 1, 1),
+    (2, 1, 2),
+    (3, 1, 3),
+    (4, 1, 4),
+    (5, 2, 1),
+    (6, 2, 2),
+    (7, 2, 3),
+    (8, 3, 1),
+    (9, 3, 2),
+    (10, 3, 4),
+    (11, 3, 5),
+    (12, 3, 6),
+    (13, 5, 1),
+    (14, 5, 2),
+    (15, 5, 3),
+    (16, 5, 4),
+    (17, 5, 6),
+    (18, 5, 7),
+    (19, 5, 8);
+    ";
+
+    $this->db->query($query);
+  }
 }
