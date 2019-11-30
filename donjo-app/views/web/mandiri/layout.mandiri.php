@@ -32,6 +32,9 @@
                   case 4:
                     $views_partial_layout = 'web/mandiri/bantuan.php';
                     break;
+                  case 5:
+                    $views_partial_layout = 'web/mandiri/surat.php';
+                    break;
                   default:
                     $views_partial_layout = 'web/mandiri/layanan.php';
                 }
@@ -85,11 +88,11 @@
               <button type="button" class="btn btn-primary pull-right" id="kirim"><i class="fa fa-sign-in"></i>Kirim</button>
             </div>
           </div>
-
         </div>
       </div>
     </div>
   </div>
+</div>  
 
   <script>
     var alamat = "<?= site_url('lapor_web/insert') ?>";

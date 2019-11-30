@@ -51,6 +51,7 @@
     <script type="text/javascript">
       var BASE_URL = "<?= base_url(); ?>";
     </script>
+    <script src="<?= base_url() ?>assets/bootstrap/js/jquery.min.js"></script>
 
     <style type="text/css">
       #footer{
