@@ -44,6 +44,7 @@ class First extends Web_Controller {
 		$this->load->model('referensi_model');
 		$this->load->model('keuangan_model');
     $this->load->model('web_dokumen_model');
+		$this->load->model('lapor_model');
 	}
 
 	public function auth()
@@ -165,6 +166,7 @@ class First extends Web_Controller {
 			2 untuk menu layanan
 			3 untuk menu lapor
 			4 untuk menu bantuan
+			5 untuk menu surat mandiri
 		*/
 		switch ($m)
 		{
@@ -179,6 +181,9 @@ class First extends Web_Controller {
 			case 4:
 				$this->load->model('program_bantuan_model','pb');
 				$data['daftar_bantuan'] = $this->pb->daftar_bantuan_yang_diterima($_SESSION['nik']);
+				break;
+			case 5:
+				$data['list_dokumen'] = $this->penduduk_model->list_dokumen($_SESSION['id']);
 				break;
 			default:
 				break;
@@ -513,5 +518,12 @@ class First extends Web_Controller {
 			$data[$kolom] = $this->security->xss_clean($data[$kolom]);
 		}
 	}
+
+	public function ajax_table_surat_permohonan()
+  {
+    $nama_surat = $this->input->post('nama_surat');
+    $data = $this->lapor_model->get_current_surat_nama($nama_surat);
+    echo json_encode($data);
+  }
 
 }

@@ -9,6 +9,7 @@ class Surat_master extends Admin_Controller {
 		$this->load->model('surat_master_model');
 		$this->load->model('klasifikasi_model');
 		$this->load->model('header_model');
+		$this->load->model('lapor_model');
 		$this->modul_ini = 4;
 	}
 
@@ -190,6 +191,53 @@ class Surat_master extends Admin_Controller {
 	{
 		$this->surat_master_model->favorit($id, $k);
 		redirect("surat_master");
+	}
+
+	public function form_surat_mohon($p = 1, $o = 0, $id = '')
+	{
+		$data['p'] = $p;
+		$data['o'] = $o;
+		$data['klasifikasi'] = $this->klasifikasi_model->list_kode();
+		$privilege = $this->lapor_model->get_surat_ref_all();
+
+		if ($id)
+		{
+			$data['surat_master'] = $this->surat_master_model->get_surat_format($id);
+			$currentPrivilege = $this->lapor_model->get_current_surat_ref($id);
+			$data['form_action'] = site_url("surat_master/update_surat_mohon/$p/$o/$id");
+		}
+		else
+		{
+			$data['surat_master'] = NULL;
+			$data['crtPrivilege'] = NULL;
+			$data['form_action'] = site_url("surat_master/insert");
+		}
+
+		$data['privileges'] = $privilege;
+		$data['crtPrivilege'] = $currentPrivilege;
+
+		$header = $this->header_model->get_data();
+		$nav['act'] = 4;
+		$nav['act_sub'] = 30;
+		$header['minsidebar'] = 1;
+		$this->load->view('header', $header);
+		$this->load->view('nav', $nav);
+		$this->load->view('surat_master/form_surat_mohon', $data);
+		$this->load->view('footer');
+	}
+
+	public function update_surat_mohon($p = 1, $o = 0, $id = '')
+	{
+		$privilegeData = $this->input->post('privlg');
+
+		if (isset($privilegeData) && !empty($privilegeData)) {
+			$query = $this->lapor_model->remove_from_privileges($privilegeData, $id);
+			foreach ($privilegeData as $key => $value) {
+			$data = array('ref_surat_id' => $privilegeData[$key], 'surat_format_id' => $id);
+			$result = $this->db->insert('surat_format_ref', $data);
+			}
+		}
+		redirect("surat_master/index/$p/$o");
 	}
 
 }
