@@ -84,6 +84,7 @@
 																	<td><?= $data['no']?></td>
 																	<td nowrap>
 																		<a href="<?= site_url("surat_master/form/$p/$o/$data[id]")?>" class="btn bg-orange btn-flat btn-sm"  title="Ubah Data"><i class="fa fa-edit"></i></a>
+																		<a href="<?= site_url("surat_master/form_surat_mohon/$p/$o/$data[id]")?>" class="btn bg-red btn-flat btn-sm"  title="List Dokumen Permohonan Surat"><i class="fa fa-list"></i></a>
 																		<?php if ($data['kunci'] == '0'): ?>
 																			<a href="<?= site_url("surat_master/lock/$data[id]/$data[kunci]")?>" class="btn bg-navy btn-flat btn-sm" title="Non-Aktifkan Surat" ><i class="fa fa-unlock"></i></a>
 																			<?php if ($data['favorit']==1): ?>
@@ -187,4 +188,3 @@
 		</div>
 	</section>
 </div>
-
