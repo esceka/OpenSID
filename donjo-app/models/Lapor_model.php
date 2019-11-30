@@ -15,14 +15,14 @@
 	 */
 	public function insert()
 	{
-		$data['komentar'] = strip_tags($_POST["komentar"]);
+		$data['komentar'] = strip_tags(" Permohonan Surat ".$_POST["nama_surat"]." - ".$_POST["hp"]." - ".$_POST["komentar"]);
 		/** ambil dari data session saja */
 		$data['owner'] = $_SESSION['nama'];
 		$data['email'] = $_SESSION['nik'];
 
 		// load library form_validation
 		$this->load->library('form_validation');
-		$this->form_validation->set_rules('komentar', 'Laporan', 'required');
+		$this->form_validation->set_rules('komentar', 'Laporan');
 		$this->form_validation->set_rules('owner', 'Nama', 'required');
 		$this->form_validation->set_rules('email', 'NIK', 'required');
 
@@ -41,6 +41,253 @@
 		if (!$outp)
 			$_SESSION['success'] = -1;
 		return ($_SESSION['success'] == 1);
+	}
+
+	public function autocomplete()
+	{
+		$sql = "SELECT ref_surat_nama FROM ref_surat_format";
+		$query = $this->db->query($sql);
+		$data = $query->result_array();
+
+		$out = '';
+		for ($i=0; $i < count($data); $i++)
+		{
+			$out .= ",'".$data[$i]['ref_surat_nama']."'";
+		}
+		return '['.strtolower(substr($out, 1)).']';
+	}
+
+	private function search_sql()
+	{
+		if (isset($_SESSION['cari']))
+		{
+			$keyword = $_SESSION['cari'];
+			$keyword = '%'.$this->db->escape_like_str($keyword).'%';
+			$search_sql = " AND (u.ref_surat_nama LIKE '$keyword' OR u.ref_surat_nama LIKE '$keyword')";
+			return $search_sql;
+		}
+	}
+
+	private function filter_sql()
+	{
+		if (isset($_SESSION['filter']))
+		{
+			$filter = $_SESSION['filter'];
+			$filter_sql = " AND u.ref_surat_id = $filter";
+			return $filter_sql;
+		}
+	}
+
+	public function paging($page = 1, $o = 0)
+	{
+		$sql = "SELECT COUNT(*) AS jml " . $this->list_data_sql();
+		$query = $this->db->query($sql);
+		$row = $query->row_array();
+		$jml_data = $row['jml'];
+
+		$this->load->library('paging');
+		$cfg['page'] = $page;
+		$cfg['per_page'] = $_SESSION['per_page'];
+		$cfg['num_rows'] = $jml_data;
+		$this->paging->init($cfg);
+
+		return $this->paging;
+	}
+
+	private function list_data_sql()
+	{
+		$sql = " FROM ref_surat_format u, ref_surat_format g WHERE u.ref_surat_id = g.ref_surat_id ";
+		$sql .= $this->search_sql();
+		$sql .= $this->filter_sql();
+		return $sql;
+	}
+
+	public function list_data($order = 0, $offset = 0, $limit = 500)
+	{
+		// Ordering sql
+		switch($order)
+		{
+			case 1 :
+				$order_sql = ' ORDER BY u.ref_surat_nama';
+				break;
+			case 2:
+				$order_sql = ' ORDER BY u.ref_surat_nama DESC';
+				break;
+			case 3 :
+				$order_sql = ' ORDER BY u.ref_surat_id';
+				break;
+			case 4:
+				$order_sql = ' ORDER BY u.ref_surat_id DESC';
+				break;
+			default:
+				$order_sql = ' ORDER BY u.ref_surat_id';
+		}
+		// Paging sql
+		$paging_sql = ' LIMIT '.$offset.','.$limit;
+		// Query utama
+		$sql = "SELECT u.*, g.ref_surat_nama as grup " . $this->list_data_sql();
+		$sql .= $order_sql;
+		$sql .= $paging_sql;
+
+		$query = $this->db->query($sql);
+		$data = $query->result_array();
+
+		// Formating output
+		$j = $offset;
+		for ($i=0; $i < count($data); $i++)
+		{
+			$data[$i]['no'] = $j + 1;
+			$j++;
+		}
+		return $data;
+	}
+
+	/**
+	 * Insert user baru ke database
+	 * @return  void
+	 */
+	public function insert_ref_surat()
+	{
+		$_SESSION['error_msg'] = NULL;
+		$_SESSION['success'] = 1;
+
+		$data = $this->input->post(NULL);
+
+		$data['ref_surat_nama'] = strip_tags($data['ref_surat_nama']);
+
+		if (!$this->db->insert('ref_surat_format', $data))
+		{
+			$_SESSION['success'] = -1;
+			$_SESSION['error_msg'] = ' -> Gagal memperbarui data di database';
+		}
+	}
+
+	public function update($id=0)
+	{
+		$data = $_POST;
+		$this->db->where('ref_surat_id', $id);
+		$outp = $this->db->update('ref_surat_format', $data);
+
+		if ($outp) $_SESSION['success'] = 1;
+		else $_SESSION['success'] = -1;
+	}
+
+	public function delete($idUser = '')
+	{
+		$sql = "DELETE FROM ref_surat_format WHERE ref_surat_id = ?";
+		$hasil = $this->db->query($sql, array($idUser));
+
+    if ($hasil)
+		{
+	    $_SESSION['error_msg'] = 'Sukses menghapus data';
+			$_SESSION['success'] = 1;
+		}
+	}
+
+	public function delete_all()
+	{
+    $id_cb = $_POST['id_cb'];
+    // Cek apakah ada data yang dicentang atau dipilih
+    if (!is_null($id_cb))
+    {
+      foreach ($id_cb as $id)
+      {
+        $this->delete($id);
+      }
+    }
+    else
+    {
+      $_SESSION['error_msg'] = 'Tidak ada data yang dipilih';
+      $_SESSION['success'] = -1;
+    }
+	}
+
+	public function get_surat($id = 0)
+	{
+		$sql = "SELECT * FROM ref_surat_format WHERE ref_surat_id = ?";
+		$query = $this->db->query($sql, $id);
+		$data = $query->row_array();
+		return $data;
+	}
+
+	public function get_current_surat_nama($nama_surat)
+	{
+		$this->db->select('*')
+				 ->from('tweb_surat_format')
+				 ->join('surat_format_ref', "tweb_surat_format.id = surat_format_ref.surat_format_id")
+				 ->join('ref_surat_format', "ref_surat_format.ref_surat_id = surat_format_ref.ref_surat_id")
+				 ->where('tweb_surat_format.nama',$nama_surat);
+		 $query = $this->db->get();
+		 $data = $query->result_array();
+		 for ($i=0; $i<count($data); $i++)
+		 {
+			 $data[$i]['ref_surat_nama']=($i+1).") ".$data[$i]['ref_surat_nama'];
+		 }
+		 return $data;
+	}
+
+	public function get_surat_ref_all()
+	{
+		$this->db->select('*')
+		         ->from('ref_surat_format');
+		$query = $this->db->get();
+		return $query->result_array();
+	}
+
+	public function get_current_surat_ref($id)
+	{
+		$this->db->select('*')
+				 ->from('tweb_surat_format')
+				 ->join('surat_format_ref', "tweb_surat_format.id = surat_format_ref.surat_format_id")
+				 ->join('ref_surat_format', "ref_surat_format.ref_surat_id = surat_format_ref.ref_surat_id")
+				 ->where('surat_format_ref.surat_format_id',$id);
+		$query = $this->db->get();
+		return $query->result();
+	}
+
+	public function remove_from_privileges($privilege_ids=false, $surat_format_id=false)
+	{
+
+		if(empty($surat_format_id))
+		{
+			return FALSE;
+		}
+
+		if(!is_array($privilege_ids))
+		{
+			$privilege_ids = array($privilege_ids);
+		}
+
+		foreach($privilege_ids as $privilege_id)
+		{
+			$this->db->select('*')
+					 ->from('surat_format_ref')
+					 ->join('tweb_surat_format', "tweb_surat_format.id = surat_format_ref.surat_format_id")
+					 ->join('ref_surat_format', "ref_surat_format.ref_surat_id = surat_format_ref.ref_surat_id")
+					 ->where('surat_format_ref.surat_format_id',$surat_format_id);
+			$this->db->delete();
+		}
+
+		return TRUE;
+	}
+
+	public function upload($url="")
+	{
+		$_SESSION['success'] = 1;
+		$_SESSION['error_msg'] = '';
+
+		// Folder desa untuk surat ini
+		$folder_surat = LOKASI_SURAT_DESA.$url."/";
+		if (!file_exists($folder_surat))
+		{
+			mkdir($folder_surat, 0755, true);
+		}
+		// index.html untuk menutup akses ke folder melalui browser
+		copy("surat/raw/"."index.html", $folder_surat."index.html");
+
+		$nama_file_rtf = $url . ".rtf";
+		$this->uploadBerkas('rtf', $folder_surat, 'foto', 'surat_master', $nama_file_rtf);
+		$this->salin_lampiran($url, $folder_surat);
 	}
 
 }
