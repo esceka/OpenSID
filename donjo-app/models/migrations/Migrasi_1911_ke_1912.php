@@ -125,22 +125,141 @@ class Migrasi_1911_ke_1912 extends CI_model {
 			$this->db->query("CREATE VIEW dokumen_hidup AS SELECT * FROM dokumen WHERE deleted <> 1");
 		// Sesuaikan tabel config dengan sql_mode STRICT_TRANS_TABLES
 	  $this->dbforge->modify_column('config', 'logo varchar(100) NULL DEFAULT NULL');
-	  $this->dbforge->modify_column('config', 'lat varchar(20) NULL DEFAULT NULL');		
-	  $this->dbforge->modify_column('config', 'lng varchar(20) NULL DEFAULT NULL');		
-	  $this->dbforge->modify_column('config', 'zoom tinyint(4) NULL DEFAULT NULL');		
-	  $this->dbforge->modify_column('config', 'map_tipe varchar(20) NULL DEFAULT NULL');		
+	  $this->dbforge->modify_column('config', 'lat varchar(20) NULL DEFAULT NULL');
+	  $this->dbforge->modify_column('config', 'lng varchar(20) NULL DEFAULT NULL');
+	  $this->dbforge->modify_column('config', 'zoom tinyint(4) NULL DEFAULT NULL');
+	  $this->dbforge->modify_column('config', 'map_tipe varchar(20) NULL DEFAULT NULL');
 	  $this->dbforge->modify_column('config', 'path text NULL');
   	if ($this->db->field_exists('g_analytic','config'))
 		{
-		  $this->dbforge->drop_column('config', 'g_analytic');					
+		  $this->dbforge->drop_column('config', 'g_analytic');
 		}
 		// Sesuaikan impor analisis dengan sql_mode STRICT_TRANS_TABLES
-	  $this->dbforge->modify_column('analisis_master', 'id_kelompok int(11) NULL DEFAULT NULL');		
-	  $this->dbforge->modify_column('analisis_master', 'id_child smallint(4) NULL DEFAULT NULL');		
-	  $this->dbforge->modify_column('analisis_master', 'format_impor tinyint(2) NULL DEFAULT NULL');		
-	  $this->dbforge->modify_column('analisis_kategori_indikator', 'kategori_kode varchar(3) NULL DEFAULT NULL');		
-	  $this->dbforge->modify_column('analisis_kategori_indikator', 'id int(11) NOT NULL AUTO_INCREMENT');		
-	  $this->dbforge->modify_column('analisis_indikator', 'id_kategori int(4) NOT NULL');		
+	  $this->dbforge->modify_column('analisis_master', 'id_kelompok int(11) NULL DEFAULT NULL');
+	  $this->dbforge->modify_column('analisis_master', 'id_child smallint(4) NULL DEFAULT NULL');
+	  $this->dbforge->modify_column('analisis_master', 'format_impor tinyint(2) NULL DEFAULT NULL');
+	  $this->dbforge->modify_column('analisis_kategori_indikator', 'kategori_kode varchar(3) NULL DEFAULT NULL');
+	  $this->dbforge->modify_column('analisis_kategori_indikator', 'id int(11) NOT NULL AUTO_INCREMENT');
+	  $this->dbforge->modify_column('analisis_indikator', 'id_kategori int(4) NOT NULL');
+
+    // Table ref_surat_format tempat nama dokumen sbg syarat Permohonan surat
+    $this->dbforge->add_field(array(
+			'ref_surat_id' => array(
+				'type' => 'INT',
+				'constraint' => 1,
+				'unsigned' => TRUE,
+				'null' => FALSE,
+				'auto_increment' => TRUE
+			),
+			'ref_surat_nama' => array(
+				'type' => 'VARCHAR',
+				'constraint' => 255,
+				'null' => FALSE,
+
+			),
+		));
+		$this->dbforge->add_key("ref_surat_id",true);
+		$this->dbforge->create_table("ref_surat_format", TRUE);
+
+    // Menambahkan Data Table ref_surat_format
+    $query = "
+    INSERT INTO `ref_surat_format` (`ref_surat_id`, `ref_surat_nama`) VALUES
+    (1, 'Surat Pengantar RT/RW'),
+    (2, 'Fotokopi KK'),
+    (3, 'Fotokopi KTP'),
+    (4, 'Fotokopi Surat Nikah/Akta Nikah/Kutipan Akta Perkawinan'),
+    (5, 'Fotokopi Akta Kelahiran/Surat Kelahiran bagi keluarga yang mempunyai anak'),
+    (6, 'Surat Pindah Datang dari tempat asal'),
+    (7, 'Surat Keterangan Kematian dari Rumah Sakit, Rumah Bersalin Puskesmas, atau visum Dokter'),
+    (8, 'Surat Keterangan Cerai'),
+    (9, 'Fotokopi Ijasah Terakhir'),
+    (10, 'SK. PNS/KARIP/SK. TNI – POLRI'),
+    (11, 'Surat Keterangan Kematian dari Kepala Desa/Kelurahan'),
+    (12, 'Surat imigrasi / STMD (Surat Tanda Melapor Diri)');
+    ";
+
+    $this->db->query($query);
+
+    // Table surat_format_ref sbg link antara surat yg dimohon dan dokumen yg diperlukan
+    $this->dbforge->add_field(array(
+			'id' => array(
+				'type' => 'INT',
+				'constraint' => 10,
+				'null' => FALSE,
+				'auto_increment' => TRUE
+			),
+			'surat_format_id' => array(
+				'type' => 'INT',
+				'constraint' => 10,
+				'null' => FALSE,
+
+			),
+			'ref_surat_id' => array(
+				'type' => 'INT',
+				'constraint' => 10,
+				'null' => FALSE,
+
+			),
+		));
+		$this->dbforge->add_key("id",true);
+		$this->dbforge->create_table("surat_format_ref", TRUE);
+
+    // Menambahkan Data Table surat_format_ref (contoh saja)
+    $query = "
+    INSERT INTO `surat_format_ref` (`id`, `surat_format_id`, `ref_surat_id`) VALUES
+    (1, 1, 1),
+    (2, 1, 2),
+    (3, 1, 3),
+    (4, 1, 4),
+    (5, 2, 1),
+    (6, 2, 2),
+    (7, 2, 3),
+    (8, 3, 1),
+    (9, 3, 2),
+    (10, 3, 4),
+    (11, 3, 5),
+    (12, 3, 6),
+    (13, 5, 1),
+    (14, 5, 2),
+    (15, 5, 3),
+    (16, 5, 4),
+    (17, 5, 6),
+    (18, 5, 7),
+    (19, 5, 8);
+    ";
+
+    $this->db->query($query);
+
+    // Menambahkan menu 'Group / Hak Akses' ke table 'setting_modul'
+    $data = array();
+    $data[] = array(
+      'id'=>'97',
+      'modul'=>'List Dokumen Permohonan',
+      'url'=>'surat_mohon',
+      'aktif'=>'1',
+      'ikon'=>'fa fa-book',
+      'urut'=>'5',
+      'level'=>'2',
+      'hidden'=>'0',
+      'ikon_kecil'=>'',
+      'parent'=>4);
+
+      foreach ($data as $modul)
+      {
+        $sql = $this->db->insert_string('setting_modul', $modul);
+        $sql .= " ON DUPLICATE KEY UPDATE
+        id = VALUES(id),
+        modul = VALUES(modul),
+        url = VALUES(url),
+        aktif = VALUES(aktif),
+        ikon = VALUES(ikon),
+        urut = VALUES(urut),
+        level = VALUES(level),
+        hidden = VALUES(hidden),
+        ikon_kecil = VALUES(ikon_kecil),
+        parent = VALUES(parent)";
+        $this->db->query($sql);
+      }
 
 	}
 }
